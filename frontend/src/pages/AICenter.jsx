@@ -8,6 +8,12 @@ export default function AICenter() {
   const [prompt, setPrompt] = useState('');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg, type = 'error') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 5000);
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -31,7 +37,12 @@ export default function AICenter() {
         : await apiPost('/ai-center/general', { prompt });
       setResult(data);
     } catch (err) {
-      setResult({ success: false, result: 'Failed to query AI' });
+      if (err.message && err.message.includes('Rate limit')) {
+        showToast(err.message);
+      } else {
+        showToast('Failed to query AI. Please try again.');
+      }
+      setResult({ success: false, result: err.message || 'Failed to query AI' });
     }
     setLoading(false);
   };
@@ -44,6 +55,16 @@ export default function AICenter() {
 
   return (
     <div>
+      {toast && (
+        <div style={{
+          position: 'fixed', top: 20, right: 20, zIndex: 9999,
+          background: toast.type === 'success' ? '#10b981' : '#ef4444',
+          color: '#fff', padding: '12px 20px', borderRadius: 8,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.3)', maxWidth: 480, fontSize: 14,
+        }}>
+          {toast.msg}
+        </div>
+      )}
       <div className="ai-center-header">
         <h1>AI Research Center</h1>
         <p style={{ color: '#64748b', marginTop: 4 }}>

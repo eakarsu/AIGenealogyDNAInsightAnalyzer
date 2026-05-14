@@ -41,6 +41,20 @@ export default function Sidebar({ open, onToggle, onLogout }) {
           <span className="icon">🤖</span>
           {open && <span className="label">AI Research Center</span>}
         </div>
+        <div
+          className={`sidebar-link ${isActive('/ai-structured-tools') ? 'active' : ''}`}
+          onClick={() => navigate('/ai-structured-tools')}
+        >
+          <span className="icon">🧪</span>
+          {open && <span className="label">AI Structured Tools</span>}
+        </div>
+        <div
+          className={`sidebar-link ${isActive('/ai-history') ? 'active' : ''}`}
+          onClick={() => navigate('/ai-history')}
+        >
+          <span className="icon">📋</span>
+          {open && <span className="label">AI History</span>}
+        </div>
       </div>
 
       <div className="sidebar-section">

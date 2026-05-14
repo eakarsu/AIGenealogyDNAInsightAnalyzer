@@ -25,6 +25,14 @@ export async function apiPost(path, body) {
     headers: getHeaders(),
     body: JSON.stringify(body),
   });
+  if (res.status === 429) {
+    throw new Error('Rate limit exceeded. You can make up to 20 AI requests per hour. Please try again later.');
+  }
+  if (res.status === 503) {
+    let info = {};
+    try { info = await res.json(); } catch (_) {}
+    throw new Error(info.error || 'AI service unavailable (OPENROUTER_API_KEY not configured).');
+  }
   return res.json();
 }
 
