@@ -7,6 +7,7 @@ import AICenter from './pages/AICenter';
 import AIStructuredTools from './pages/AIStructuredTools';
 import AIHistory from './pages/AIHistory';
 import FamilyTreeAndCommunity from './pages/FamilyTreeAndCommunity';
+import CustomViewsPage from './pages/CustomViewsPage';
 import Sidebar from './components/Sidebar';
 
 // === Batch 04 Gaps & Frontend Mounts ===
@@ -60,6 +61,7 @@ export default function App() {
           <Route path="/ai-structured-tools" element={<AIStructuredTools />} />
           <Route path="/ai-history" element={<AIHistory />} />
           <Route path="/family-tree-community" element={<FamilyTreeAndCommunity />} />
+          <Route path="/custom-views" element={<CustomViewsPage />} />
           {/* // === Batch 04 Gaps & Frontend Mounts === */}
           <Route path="/cf-agentic-genealogy-research-autonomously-" element={<CfAgenticGenealogyResearchAutonomously />} />
           <Route path="/cf-multi-modal-dna-document-fusion-combinin" element={<CfMultiModalDnaDocumentFusionCombinin />} />

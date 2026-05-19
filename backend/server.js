@@ -65,6 +65,14 @@ app.use('/api/gap-no-real-time-tree-collaboration', route_gap_no_real_time_tree_
 app.use('/api/gap-limited-document-ocr-upload-exists-but', route_gap_limited_document_ocr_upload_exists_but);
 app.use('/api/gap-no-payment-subscription-module', route_gap_no_payment_subscription_module);
 
+// === Custom Views (4 endpoints) — MUST be mounted BEFORE the 404 handler ===
+app.use('/api/custom-views', require('./routes/customViews'));
+
+// 404 fallback for unknown /api routes
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'Not found', path: req.originalUrl });
+});
+
 app.listen(PORT, () => {
   console.log(`Backend server running on http://localhost:${PORT}`);
 });
