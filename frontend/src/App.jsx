@@ -9,6 +9,7 @@ import AIHistory from './pages/AIHistory';
 import FamilyTreeAndCommunity from './pages/FamilyTreeAndCommunity';
 import CustomViewsPage from './pages/CustomViewsPage';
 import Sidebar from './components/Sidebar';
+import SegmentTriangulationBoard from './pages/SegmentTriangulationBoard';
 
 // === Batch 04 Gaps & Frontend Mounts ===
 import CfAgenticGenealogyResearchAutonomously from './pages/CfAgenticGenealogyResearchAutonomously';
@@ -28,6 +29,11 @@ import GapNoWebhookIntegrationsWithAncestryfam from './pages/GapNoWebhookIntegra
 import GapNoRealTimeTreeCollaboration from './pages/GapNoRealTimeTreeCollaboration';
 import GapLimitedDocumentOcrUploadExistsBut from './pages/GapLimitedDocumentOcrUploadExistsBut';
 import GapNoPaymentSubscriptionModule from './pages/GapNoPaymentSubscriptionModule';
+
+import CodexCustomVizFeature from './pages/CodexCustomVizFeature';
+import CodexOperationsFeature from './pages/CodexOperationsFeature';
+
+import TimelineView from './pages/TimelineView';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
@@ -55,6 +61,10 @@ export default function App() {
       <Sidebar open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} onLogout={handleLogout} />
       <main className={`main-content ${sidebarOpen ? '' : 'sidebar-collapsed'}`}>
         <Routes>
+        <Route path="/insights/timeline" element={<TimelineView />} />
+        <Route path="/codex/custom-viz" element={<CodexCustomVizFeature />} />
+        <Route path="/codex/operations" element={<CodexOperationsFeature />} />
+
           <Route path="/" element={<Dashboard />} />
           <Route path="/feature/:featureId" element={<FeaturePage />} />
           <Route path="/ai-center" element={<AICenter />} />
@@ -62,6 +72,7 @@ export default function App() {
           <Route path="/ai-history" element={<AIHistory />} />
           <Route path="/family-tree-community" element={<FamilyTreeAndCommunity />} />
           <Route path="/custom-views" element={<CustomViewsPage />} />
+          <Route path="/segment-triangulation-board" element={<SegmentTriangulationBoard />} />
           {/* // === Batch 04 Gaps & Frontend Mounts === */}
           <Route path="/cf-agentic-genealogy-research-autonomously-" element={<CfAgenticGenealogyResearchAutonomously />} />
           <Route path="/cf-multi-modal-dna-document-fusion-combinin" element={<CfMultiModalDnaDocumentFusionCombinin />} />

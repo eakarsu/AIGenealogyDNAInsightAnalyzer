@@ -51,6 +51,7 @@ app.use('/api/family-tree', require('./routes/familyTree'));
 app.use('/api/community', require('./routes/community'));
 app.use('/api/dna-match-interpret', require('./routes/dnaMatchInterpretation'));
 app.use('/api/health-ancestry', require('./routes/healthAncestryInsights'));
+app.use('/api/segment-triangulation-board', require('./routes/segmentTriangulationBoard'));
 
 
 app.use('/api/gap-no-dna-match-interpretation-endpoint', route_gap_no_dna_match_interpretation_endpoint);
