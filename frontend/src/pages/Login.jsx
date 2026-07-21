@@ -30,12 +30,6 @@ export default function Login({ onLogin }) {
     setLoading(false);
   };
 
-  const autofill = () => {
-    setEmail('demo@genealogy.com');
-    setPassword('demo123');
-    setName('Demo User');
-  };
-
   return (
     <div className="login-page">
       <div className="login-card">
@@ -62,9 +56,6 @@ export default function Login({ onLogin }) {
             {loading ? 'Please wait...' : isRegister ? 'Create Account' : 'Sign In'}
           </button>
         </form>
-        <button className="btn-autofill" onClick={autofill}>
-          Auto-fill Demo Credentials
-        </button>
         <button
           className="btn-autofill"
           style={{ marginTop: 8 }}

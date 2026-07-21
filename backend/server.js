@@ -68,6 +68,7 @@ app.use('/api/gap-no-payment-subscription-module', route_gap_no_payment_subscrip
 
 // === Custom Views (4 endpoints) — MUST be mounted BEFORE the 404 handler ===
 app.use('/api/custom-views', require('./routes/customViews'));
+app.use('/api/governed-genetic-genealogy', require('./governance'));
 
 // 404 fallback for unknown /api routes
 app.use('/api', (req, res) => {

@@ -1,117 +1,70 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-set -e
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$PROJECT_DIR"
 
-echo "============================================"
-echo "  AI Genealogy DNA Insight Analyzer"
-echo "  Starting Application..."
-echo "============================================"
-
-# Load environment variables
-if [ -f .env ]; then
-  export $(cat .env | grep -v '^#' | xargs)
+if [[ -d backend ]]; then
+  API_DIR=backend
+  UI_DIR=frontend
+  MIGRATION=backend/migrations/001_governed_workflows.sql
+else
+  API_DIR=server
+  UI_DIR=client
+  MIGRATION=server/migrations/001_governed_workflows.sql
 fi
 
-BACKEND_PORT=${BACKEND_PORT:-3001}
-FRONTEND_PORT=${FRONTEND_PORT:-3000}
-
-# Function to clean up ports
-cleanup_ports() {
-  echo ""
-  echo "[*] Cleaning up ports $BACKEND_PORT and $FRONTEND_PORT..."
-  lsof -ti:$BACKEND_PORT 2>/dev/null | xargs kill -9 2>/dev/null || true
-  lsof -ti:$FRONTEND_PORT 2>/dev/null | xargs kill -9 2>/dev/null || true
-  echo "[✓] Ports cleaned"
-}
-
-# Function to cleanup on exit
-cleanup() {
-  echo ""
-  echo "[*] Shutting down..."
-  kill $BACKEND_PID 2>/dev/null || true
-  kill $FRONTEND_PID 2>/dev/null || true
-  cleanup_ports
-  echo "[✓] Shutdown complete"
-  exit 0
-}
-
-trap cleanup SIGINT SIGTERM EXIT
-
-# Clean up any processes on our ports
-cleanup_ports
-
-# Check if PostgreSQL is running
-echo ""
-echo "[*] Checking PostgreSQL..."
-if ! pg_isready -h ${DB_HOST:-localhost} -p ${DB_PORT:-5432} > /dev/null 2>&1; then
-  echo "[!] PostgreSQL is not running. Attempting to start..."
-  brew services start postgresql@14 2>/dev/null || brew services start postgresql 2>/dev/null || {
-    echo "[✗] Could not start PostgreSQL. Please start it manually."
-    exit 1
-  }
-  sleep 2
-fi
-echo "[✓] PostgreSQL is running"
-
-# Create database if it doesn't exist
-echo ""
-echo "[*] Setting up database..."
-psql -h ${DB_HOST:-localhost} -p ${DB_PORT:-5432} -U ${DB_USER:-postgres} -tc "SELECT 1 FROM pg_database WHERE datname = '${DB_NAME:-genealogy_dna}'" 2>/dev/null | grep -q 1 || \
-  createdb -h ${DB_HOST:-localhost} -p ${DB_PORT:-5432} -U ${DB_USER:-postgres} ${DB_NAME:-genealogy_dna} 2>/dev/null || true
-echo "[✓] Database ready"
-
-# Install backend dependencies
-echo ""
-echo "[*] Installing backend dependencies..."
-cd backend
-npm install --silent
-echo "[✓] Backend dependencies installed"
-
-# Run seed script
-echo ""
-echo "[*] Seeding database..."
-node seed.js
-echo "[✓] Database seeded"
-
-# Start backend with nodemon (hot reload)
-echo ""
-echo "[*] Starting backend on port $BACKEND_PORT with hot reload..."
-npx nodemon server.js &
-BACKEND_PID=$!
-cd ..
-
-# Wait for backend to be ready
-echo "[*] Waiting for backend..."
-for i in {1..30}; do
-  if curl -s http://localhost:$BACKEND_PORT/api/health > /dev/null 2>&1; then
-    echo "[✓] Backend is ready"
-    break
+check() {
+  command -v node >/dev/null || { echo "node is required" >&2; return 1; }
+  command -v npm >/dev/null || { echo "npm is required" >&2; return 1; }
+  [[ -f .env ]] || { echo "Create .env from .env.example; no defaults are generated." >&2; return 1; }
+  grep -Eq '^JWT_SECRET=.{32,}$' .env ||
+    { echo "JWT_SECRET must be set to at least 32 characters." >&2; return 1; }
+  if ! grep -Eq '^DATABASE_URL=.+|^DB_HOST=.+' .env; then
+    echo "DATABASE_URL or explicit DB_* settings are required." >&2
+    return 1
   fi
-  sleep 1
-done
+  if grep -Eqi 'password123|your_.*key|change[_-]?me|placeholder' .env; then
+    echo "Refusing placeholder or demo credentials." >&2
+    return 1
+  fi
+  echo "Configuration shape is valid. External connectivity and credentials were not verified."
+}
 
-# Install frontend dependencies
-echo ""
-echo "[*] Installing frontend dependencies..."
-cd frontend
-npm install --silent
-echo "[✓] Frontend dependencies installed"
+migrate() {
+  check
+  [[ "${ALLOW_SCHEMA_MIGRATION:-false}" == "true" ]] ||
+    { echo "Set ALLOW_SCHEMA_MIGRATION=true for this explicit operation." >&2; return 1; }
+  : "${DATABASE_URL:?Export DATABASE_URL for the migration process.}"
+  command -v psql >/dev/null || { echo "psql is required" >&2; return 1; }
+  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$MIGRATION"
+}
 
-# Start frontend with Vite (hot reload built-in)
-echo ""
-echo "[*] Starting frontend on port $FRONTEND_PORT with hot reload..."
-npx vite --port $FRONTEND_PORT --host &
-FRONTEND_PID=$!
-cd ..
+start_services() {
+  check
+  [[ -d "$API_DIR/node_modules" && -d "$UI_DIR/node_modules" ]] ||
+    { echo "Dependencies are absent. Run locked installs explicitly before startup." >&2; return 1; }
 
-echo ""
-echo "============================================"
-echo "  Application is running!"
-echo "  Frontend: http://localhost:$FRONTEND_PORT"
-echo "  Backend:  http://localhost:$BACKEND_PORT"
-echo "  Press Ctrl+C to stop"
-echo "============================================"
-echo ""
+  npm --prefix "$API_DIR" start &
+  api_pid=$!
+  if node -e "const p=require('./$UI_DIR/package.json');process.exit(p.scripts&&p.scripts.dev?0:1)"; then
+    npm --prefix "$UI_DIR" run dev &
+  else
+    BROWSER=none npm --prefix "$UI_DIR" start &
+  fi
+  ui_pid=$!
 
-# Wait for both processes
-wait
+  cleanup() {
+    kill "$api_pid" "$ui_pid" 2>/dev/null || true
+    wait "$api_pid" "$ui_pid" 2>/dev/null || true
+  }
+  trap cleanup EXIT INT TERM
+  wait "$api_pid" "$ui_pid"
+}
+
+case "${1:-check}" in
+  check) check ;;
+  migrate) migrate ;;
+  start) start_services ;;
+  *) echo "Usage: ./start.sh [check|migrate|start]" >&2; exit 64 ;;
+esac

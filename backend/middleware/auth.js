@@ -1,9 +1,12 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config({ path: '../.env' });
 
-const JWT_SECRET = process.env.JWT_SECRET || 'genealogy-dna-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 function authenticateToken(req, res, next) {
+  if (!JWT_SECRET || JWT_SECRET.length < 32) {
+    return res.status(503).json({ error: 'Authentication is not configured' });
+  }
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
 

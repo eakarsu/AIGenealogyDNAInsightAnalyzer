@@ -1,5 +1,8 @@
 const pool = require('./db');
 const bcrypt = require('bcryptjs');
+if (process.env.ALLOW_DEMO_SEED !== 'true' || process.env.NODE_ENV === 'production') {
+  throw new Error('Demo seed is quarantined; set ALLOW_DEMO_SEED=true outside production to run it explicitly');
+}
 
 async function seed() {
   const client = await pool.connect();
