@@ -4,6 +4,11 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
+set -a
+# shellcheck disable=SC1091
+source .env
+set +a
+
 if [[ -d backend ]]; then
   API_DIR=backend
   UI_DIR=frontend
@@ -48,7 +53,7 @@ start_services() {
   npm --prefix "$API_DIR" start &
   api_pid=$!
   if node -e "const p=require('./$UI_DIR/package.json');process.exit(p.scripts&&p.scripts.dev?0:1)"; then
-    npm --prefix "$UI_DIR" run dev &
+    npm --prefix "$UI_DIR" run dev -- --host "${HOST:-127.0.0.1}" --port "${FRONTEND_PORT:-3000}" &
   else
     BROWSER=none npm --prefix "$UI_DIR" start &
   fi
@@ -62,7 +67,7 @@ start_services() {
   wait "$api_pid" "$ui_pid"
 }
 
-case "${1:-check}" in
+case "${1:-start}" in
   check) check ;;
   migrate) migrate ;;
   start) start_services ;;

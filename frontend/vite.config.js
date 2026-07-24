@@ -4,10 +4,12 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3000,
+    host: process.env.HOST || '127.0.0.1',
+    port: Number(process.env.FRONTEND_PORT || process.env.CLIENT_PORT || 3000),
+    strictPort: true,
     proxy: {
       '/api': {
-        target: process.env.BACKEND_URL || 'http://localhost:3001',
+        target: process.env.BACKEND_URL || `http://127.0.0.1:${process.env.BACKEND_PORT || 3001}`,
         changeOrigin: true,
       },
     },

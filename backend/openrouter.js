@@ -4,6 +4,7 @@ require('dotenv').config({ path: '../.env' });
 async function queryAI(prompt, systemPrompt = 'You are an expert genealogist and DNA analyst. Provide detailed, professional analysis.') {
   const apiKey = process.env.OPENROUTER_API_KEY;
   const model = process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022';
+  const baseUrl = new URL(process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1');
 
   if (!apiKey || apiKey === 'your_openrouter_api_key_here') {
     return {
@@ -25,8 +26,9 @@ async function queryAI(prompt, systemPrompt = 'You are an expert genealogist and
 
   return new Promise((resolve) => {
     const options = {
-      hostname: 'openrouter.ai',
-      path: '/api/v1/chat/completions',
+      hostname: baseUrl.hostname,
+      port: baseUrl.port || 443,
+      path: `${baseUrl.pathname.replace(/\/$/, '')}/chat/completions`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
