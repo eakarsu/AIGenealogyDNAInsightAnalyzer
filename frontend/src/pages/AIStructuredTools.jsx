@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { apiPost } from '../api';
+import AIReport from '../components/AIReport';
 
 /**
  * Frontend for the 3 new structured AI endpoints in routes/aiCenter.js:
@@ -20,7 +21,35 @@ const TABS = [
   { id: 'ethnicity-deep-dive', label: 'Ethnicity Deep Dive', icon: '🌍' },
 ];
 
-function ResultBlock({ data, error }) {
+// Every scenario supplies every editable field, including optional notes.
+export const EXAMPLES = {
+  'dna-match-interpret': [
+    { label: 'Close match', values: { shared_cm: 850, shared_segments: 30, longest_segment_cm: 60, person_age: 45, match_age: 50, notes: 'The match appears on the maternal side; no documented common ancestor yet.' } },
+    { label: 'Distant match', values: { shared_cm: 120, shared_segments: 8, longest_segment_cm: 24, person_age: 38, match_age: 67, notes: 'Both trees include families in County Galway; verify records before linking them.' } },
+  ],
+  'migration-story': [
+    { label: 'Irish migration', values: { haplogroups: 'R1b1a1a (Y), H1a (mt)', locations: 'Connacht, Ireland (1820); New York City (1851); Boston (1880)', time_period: '1800-1900', surnames: "Murphy, O'Sullivan" } },
+    { label: 'Italian migration', values: { haplogroups: 'J2 (Y), H5 (mt)', locations: 'Naples, Italy (1880); New York City (1902); Philadelphia (1920)', time_period: '1880-1930', surnames: 'Russo, Esposito' } },
+  ],
+  'health-risk-explain': [
+    { label: 'BRCA finding', values: { finding: 'BRCA2 c.5946delT pathogenic variant reported by a clinical laboratory', family_history: 'Mother and maternal aunt had breast cancer in their 50s.', age: 38, sex: 'female' } },
+    { label: 'LDL finding', values: { finding: 'LDLR pathogenic variant reported by a clinical laboratory', family_history: 'Father had early coronary disease; cholesterol records need review.', age: 42, sex: 'male' } },
+  ],
+  'cousin-discovery': [
+    { label: 'Murphy branch', values: { user_haplogroups: 'R1b1a1a (Y), H1a (mt)', known_locations: 'Connacht, Ireland; Boston', known_surnames: "Murphy, O'Sullivan", target_match_pool: JSON.stringify([{ name: 'J. Murphy', shared_cm: 120, locations: ['Boston'], surnames: ['Murphy'] }]) } },
+    { label: 'Russo branch', values: { user_haplogroups: 'J2 (Y), H5 (mt)', known_locations: 'Naples, Italy; Philadelphia', known_surnames: 'Russo, Esposito', target_match_pool: JSON.stringify([{ name: 'A. Russo', shared_cm: 85, locations: ['Philadelphia'], surnames: ['Russo'] }]) } },
+  ],
+  'dna-anomaly-detection': [
+    { label: 'Relationship conflict', values: { expected_ethnicity: 'Irish 50%, Italian 50%', reported_ethnicity: 'Irish 35%, Italian 25%, German 30%, Eastern European 10%', expected_relationships: 'Father, paternal uncle', observed_relationships: 'Father appears as half-uncle', notes: 'Discuss uncertainty and privacy before suggesting follow-up tests.' } },
+    { label: 'Ethnicity conflict', values: { expected_ethnicity: 'Irish 75%, German 25%', reported_ethnicity: 'Irish 40%, German 20%, Scandinavian 40%', expected_relationships: 'Maternal first cousin', observed_relationships: 'Match shares 120 cM', notes: 'Ethnicity estimates vary by provider; avoid definitive family conclusions.' } },
+  ],
+  'ethnicity-deep-dive': [
+    { label: 'Sardinian history', values: { ethnicity: 'Sardinian', percentage: 12, parent_population: 'Southern European', time_horizon_years: 2000 } },
+    { label: 'Irish history', values: { ethnicity: 'Irish', percentage: 28, parent_population: 'Northwestern European', time_horizon_years: 1500 } },
+  ],
+};
+
+export function ResultBlock({ data, error }) {
   if (error) {
     return (
       <div style={{ marginTop: 16, padding: 16, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, color: '#b91c1c' }}>
@@ -29,16 +58,8 @@ function ResultBlock({ data, error }) {
     );
   }
   if (!data) return null;
-  const text = data.result || data.narrative || data.explanation || data.summary;
   return (
-    <div style={{ marginTop: 16, padding: 20, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10 }}>
-      <h3 style={{ marginTop: 0 }}>AI Result</h3>
-      {text && typeof text === 'string' ? (
-        <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>{text}</p>
-      ) : (
-        <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13 }}>{JSON.stringify(data, null, 2)}</pre>
-      )}
-    </div>
+    <AIReport response={data} title={data.feature || 'AI result'} />
   );
 }
 
@@ -93,6 +114,11 @@ export default function AIStructuredTools() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState({});
   const [errors, setErrors] = useState({});
+  const setters = {
+    'dna-match-interpret': setDnaForm, 'migration-story': setMigrationForm,
+    'health-risk-explain': setHealthForm, 'cousin-discovery': setCousinForm,
+    'dna-anomaly-detection': setAnomalyForm, 'ethnicity-deep-dive': setEthnicityForm,
+  };
 
   const submit = async () => {
     setLoading(true);
@@ -183,6 +209,7 @@ export default function AIStructuredTools() {
       </div>
 
       <div className="ai-feature-card" style={{ padding: 20, cursor: 'default' }}>
+        <div className="ai-preset-bar"><strong>Complete sample inputs</strong><div className="ai-actions">{EXAMPLES[tab].map((example) => <button key={example.label} type="button" className="btn btn-secondary" disabled={loading} onClick={() => { setters[tab]({ ...example.values }); setResults((previous) => ({ ...previous, [tab]: null })); }}>{example.label}</button>)}</div></div>
         {tab === 'dna-match-interpret' && (
           <>
             <h3>DNA Match Interpretation</h3>

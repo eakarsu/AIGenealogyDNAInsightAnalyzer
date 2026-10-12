@@ -1,9 +1,41 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { features } from '../features';
-import { apiGet, apiPost, apiPut, apiDelete } from '../api';
+import { apiGet, apiPost, apiPut, apiDelete, listRows } from '../api';
 import DetailModal from '../components/DetailModal';
 import FormModal from '../components/FormModal';
+import AIReport from '../components/AIReport';
+
+export function RecordTable({ feature, data, page, pagination, onSelect }) {
+  return (
+    <div className="data-table-container">
+      <table className="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            {feature.displayColumns.map((col) => (
+              <th key={col}>{col}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.length === 0 ? (
+            <tr><td colSpan={feature.columns.length + 1} style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>No records yet. Click "New Item" to add one.</td></tr>
+          ) : (
+            data.map((item, idx) => (
+              <tr key={item.id} onClick={() => onSelect(item)}>
+                <td>{(page - 1) * pagination.limit + idx + 1}</td>
+                {feature.columns.map((col) => (
+                  <td key={col}>{item[col] != null ? String(item[col]) : '-'}</td>
+                ))}
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export default function FeaturePage() {
   const { featureId } = useParams();
@@ -32,14 +64,13 @@ export default function FeaturePage() {
     setLoading(true);
     try {
       const result = await apiGet(`${feature.apiPath}?page=${p}&limit=20`);
-      if (result && result.data) {
-        setData(result.data);
-        setPagination(result.pagination || { total: result.data.length, totalPages: 1, limit: 20 });
-      } else if (Array.isArray(result)) {
-        setData(result);
-        setPagination({ total: result.length, totalPages: 1, limit: 20 });
-      } else {
-        setData([]);
+      const rows = listRows(result);
+      setData(rows);
+      setPagination(result?.pagination && typeof result.pagination === 'object'
+        ? { ...result.pagination, limit: Number(result.pagination.limit) || 20 }
+        : { total: rows.length, totalPages: 1, limit: 20 });
+      if (!Array.isArray(result) && !Array.isArray(result?.data)) {
+        showToast(result?.error || 'The records response was not a list.');
       }
     } catch (err) {
       showToast(err.message || 'Failed to load data');
@@ -171,6 +202,7 @@ export default function FeaturePage() {
           <p style={{ color: '#64748b', fontSize: 13, marginBottom: 12 }}>
             Upload an image of a genealogy document to extract text and structured fields using AI vision.
           </p>
+          <p style={{ color: '#94a3b8', fontSize: 13 }}>Choose a real image from your device before extraction. A sample cannot supply an uploaded file.</p>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <input
               ref={ocrFileRef}
@@ -201,49 +233,7 @@ export default function FeaturePage() {
             </button>
           </div>
 
-          {ocrResult && ocrResult.extracted_data && (
-            <div style={{ marginTop: 16 }}>
-              <div style={{ color: '#94a3b8', fontSize: 13, marginBottom: 8 }}>
-                Extracted fields (saved as document #{ocrResult.document_id}):
-              </div>
-              {ocrResult.extracted_data.persons && ocrResult.extracted_data.persons.length > 0 && (
-                <div style={{ marginBottom: 8 }}>
-                  <strong style={{ color: '#cbd5e1', fontSize: 13 }}>Persons:</strong>
-                  {ocrResult.extracted_data.persons.map((p, i) => (
-                    <div key={i} style={{ color: '#94a3b8', fontSize: 12, paddingLeft: 12 }}>
-                      {p.name}{p.birth_date ? ` (b. ${p.birth_date})` : ''}{p.death_date ? ` (d. ${p.death_date})` : ''}{p.location ? ` — ${p.location}` : ''}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {ocrResult.extracted_data.key_dates && (
-                <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 4 }}>
-                  <strong style={{ color: '#cbd5e1' }}>Key Dates:</strong> {
-                    Array.isArray(ocrResult.extracted_data.key_dates)
-                      ? ocrResult.extracted_data.key_dates.join(', ')
-                      : ocrResult.extracted_data.key_dates
-                  }
-                </div>
-              )}
-              {ocrResult.extracted_data.locations && (
-                <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 4 }}>
-                  <strong style={{ color: '#cbd5e1' }}>Locations:</strong> {
-                    Array.isArray(ocrResult.extracted_data.locations)
-                      ? ocrResult.extracted_data.locations.join(', ')
-                      : ocrResult.extracted_data.locations
-                  }
-                </div>
-              )}
-              {ocrResult.extracted_data.extracted_text && (
-                <div style={{
-                  marginTop: 8, padding: 10, background: '#0f172a', borderRadius: 6,
-                  fontSize: 12, color: '#94a3b8', maxHeight: 200, overflowY: 'auto', whiteSpace: 'pre-wrap',
-                }}>
-                  {ocrResult.extracted_data.extracted_text}
-                </div>
-              )}
-            </div>
-          )}
+          {ocrResult && ocrResult.extracted_data && <AIReport response={ocrResult.extracted_data} title="Extracted document fields" model={ocrResult.model} />}
         </div>
       )}
 
@@ -251,32 +241,7 @@ export default function FeaturePage() {
         <div className="ai-loading"><div className="spinner" /><span>Loading data...</span></div>
       ) : (
         <>
-          <div className="data-table-container">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  {feature.displayColumns.map((col) => (
-                    <th key={col}>{col}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {data.length === 0 ? (
-                  <tr><td colSpan={feature.columns.length + 1} style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>No records yet. Click "New Item" to add one.</td></tr>
-                ) : (
-                  data.map((item, idx) => (
-                    <tr key={item.id} onClick={() => setSelectedItem(item)}>
-                      <td>{(page - 1) * pagination.limit + idx + 1}</td>
-                      {feature.columns.map((col) => (
-                        <td key={col}>{item[col] != null ? String(item[col]) : '-'}</td>
-                      ))}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <RecordTable feature={feature} data={data} page={page} pagination={pagination} onSelect={setSelectedItem} />
 
           {pagination.totalPages > 1 && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px 0' }}>

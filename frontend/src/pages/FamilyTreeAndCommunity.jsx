@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { apiGet, apiPost } from '../api';
+import { apiGet, apiPost, listRows } from '../api';
 
 /**
  * Apply pass 5 frontend: Family Tree closure (people, edges, relationship lookup)
@@ -29,7 +29,7 @@ function Tree() {
   const [relRes, setRelRes] = useState(null);
   const [error, setError] = useState(null);
   const refresh = async () => {
-    try { setPeople(await apiGet('/family-tree/people')); setEdges(await apiGet('/family-tree/edges')); } catch (err) { setError(err.message); }
+    try { setPeople(listRows(await apiGet('/family-tree/people'))); setEdges(listRows(await apiGet('/family-tree/edges'))); } catch (err) { setError(err.message); }
   };
   useEffect(() => { refresh(); }, []);
   const addPerson = async (e) => {
@@ -89,7 +89,7 @@ function Community() {
   const [threads, setThreads] = useState([]);
   const [tf, setTf] = useState({ title: '', body: '', surname_tag: '', location_tag: '', haplogroup_tag: '' });
   const [error, setError] = useState(null);
-  const refresh = async () => { try { setThreads(await apiGet('/community/threads')); } catch (err) { setError(err.message); } };
+  const refresh = async () => { try { setThreads(listRows(await apiGet('/community/threads'))); } catch (err) { setError(err.message); } };
   useEffect(() => { refresh(); }, []);
   const create = async (e) => {
     e.preventDefault();

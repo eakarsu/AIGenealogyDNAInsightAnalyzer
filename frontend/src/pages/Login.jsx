@@ -54,13 +54,14 @@ export default function Login({ onLogin }) {
           </div>
           <button
             type="button"
-            onClick={() => { setEmail(import.meta.env.VITE_DEMO_EMAIL || ''); setPassword(import.meta.env.VITE_DEMO_PASSWORD || ''); }}
+            onClick={() => { setEmail(import.meta.env.VITE_DEMO_EMAIL || ''); setPassword(import.meta.env.VITE_DEMO_PASSWORD || ''); setError(''); }}
             disabled={!import.meta.env.VITE_DEMO_EMAIL || !import.meta.env.VITE_DEMO_PASSWORD}
-            aria-label="Auto Fill Demo Credentials"
+            aria-label="Fill demo credentials"
             style={{ width: '100%', marginBottom: '12px', padding: '10px 14px', borderRadius: '8px', border: '1px solid currentColor', background: 'transparent', cursor: 'pointer' }}
           >
-            Auto Fill Demo Credentials
+            Fill demo credentials
           </button>
+          {(!import.meta.env.VITE_DEMO_EMAIL || !import.meta.env.VITE_DEMO_PASSWORD) && <p className="login-subtitle">Demo credentials are not configured for this frontend.</p>}
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? 'Please wait...' : isRegister ? 'Create Account' : 'Sign In'}
           </button>

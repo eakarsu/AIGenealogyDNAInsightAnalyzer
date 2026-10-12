@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { apiGet, apiPost } from '../api';
-import ReactMarkdown from 'react-markdown';
+import AIReport from '../components/AIReport';
+
+const promptExamples = [
+  { label: 'Migration records', prompt: 'Compare an 1851 New York passenger arrival for a Murphy family from County Galway with an 1860 Boston census household. What names, ages, and locations should I verify before linking them?' },
+  { label: 'DNA match', prompt: 'A match shares 120 cM across 8 segments with my maternal line. Explain plausible relationships, what this evidence cannot prove, and which family records could narrow the possibilities.' },
+  { label: 'Source review', prompt: 'I have an 1880 Chicago census entry and an 1892 marriage record for someone named O\'Sullivan. Give me a source comparison checklist and explain how to handle conflicting birth years.' },
+];
 
 export default function AICenter() {
   const [aiFeatures, setAiFeatures] = useState([]);
@@ -90,6 +96,7 @@ export default function AICenter() {
         <h3>
           {selectedFeature ? `Ask ${selectedFeature.name}` : 'Ask AI Genealogy Assistant'}
         </h3>
+        <div className="ai-preset-bar"><strong>Sample questions</strong><div className="ai-actions">{promptExamples.map((example) => <button key={example.label} type="button" className="btn btn-secondary" disabled={loading} onClick={() => { setPrompt(example.prompt); setResult(null); }}>{example.label}</button>)}</div></div>
         <div className="ai-query-input">
           <textarea
             value={prompt}
@@ -130,7 +137,7 @@ export default function AICenter() {
           </div>
           <div className="ai-output-body">
             {result.success !== false ? (
-              <ReactMarkdown>{result.result}</ReactMarkdown>
+              <AIReport response={result} title={result.feature || 'Genealogy analysis'} />
             ) : (
               <p style={{ color: '#f87171' }}>{result.result}</p>
             )}

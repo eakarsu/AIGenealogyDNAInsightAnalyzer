@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { apiGet } from '../api';
+import { apiGet, listRows } from '../api';
+import AIReport from '../components/AIReport';
+
+export function SavedAIResult({ item }) {
+  return <AIReport response={item.result} title={item.tool_name || 'Saved AI analysis'} model={item.model} />;
+}
 
 export default function AIHistory() {
   const [history, setHistory] = useState([]);
@@ -18,11 +23,12 @@ export default function AIHistory() {
     setLoading(true);
     try {
       const result = await apiGet(`/ai-center/history?page=${p}&limit=20`);
-      if (result && result.data) {
-        setHistory(result.data);
-        setPagination(result.pagination || { total: 0, totalPages: 1, limit: 20 });
-      } else {
-        setHistory([]);
+      const rows = listRows(result);
+      setHistory(rows);
+      setPagination(result?.pagination && typeof result.pagination === 'object'
+        ? result.pagination : { total: rows.length, totalPages: 1, limit: 20 });
+      if (!Array.isArray(result) && !Array.isArray(result?.data)) {
+        showToast(result?.error || 'The history response was not a list.');
       }
     } catch (err) {
       showToast(err.message || 'Failed to load AI history');
@@ -123,7 +129,7 @@ export default function AIHistory() {
                     fontSize: 13, color: '#e2e8f0', lineHeight: 1.6, whiteSpace: 'pre-wrap',
                     maxHeight: 400, overflowY: 'auto',
                   }}>
-                    {item.result}
+                    <SavedAIResult item={item} />
                   </div>
                 )}
               </div>

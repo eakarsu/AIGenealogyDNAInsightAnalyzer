@@ -1,3 +1,4 @@
+import AIReportLibrary from "./components/AIReportLibrary";
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
@@ -57,7 +58,7 @@ export default function App() {
   }
 
   return (
-    <div className="app-layout">
+    <><AIReportLibrary floating /><div className="app-layout">
       <Sidebar open={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} onLogout={handleLogout} />
       <main className={`main-content ${sidebarOpen ? '' : 'sidebar-collapsed'}`}>
         <Routes>
@@ -95,6 +96,6 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </main>
-    </div>
+    </div></>
   );
 }

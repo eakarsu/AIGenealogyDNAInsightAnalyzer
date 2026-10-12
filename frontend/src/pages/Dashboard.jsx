@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { features } from '../features';
-import { apiGet } from '../api';
+import { apiGet, listRows } from '../api';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -13,7 +13,7 @@ export default function Dashboard() {
       for (const f of features) {
         try {
           const data = await apiGet(f.apiPath);
-          counts[f.id] = Array.isArray(data) ? data.length : 0;
+          counts[f.id] = typeof data?.pagination?.total === 'number' ? data.pagination.total : listRows(data).length;
         } catch {
           counts[f.id] = 0;
         }

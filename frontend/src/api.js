@@ -52,3 +52,11 @@ export async function apiDelete(path) {
   });
   return res.json();
 }
+
+// Record endpoints may return a bare array or a paginated envelope.
+export function listRows(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.items)) return payload.items;
+  return [];
+}
