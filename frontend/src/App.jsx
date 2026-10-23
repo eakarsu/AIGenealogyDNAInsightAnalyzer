@@ -11,6 +11,7 @@ import FamilyTreeAndCommunity from './pages/FamilyTreeAndCommunity';
 import CustomViewsPage from './pages/CustomViewsPage';
 import Sidebar from './components/Sidebar';
 import SegmentTriangulationBoard from './pages/SegmentTriangulationBoard';
+import TasksPage from './pages/TasksPage';
 
 // === Batch 04 Gaps & Frontend Mounts ===
 import CfAgenticGenealogyResearchAutonomously from './pages/CfAgenticGenealogyResearchAutonomously';
@@ -72,6 +73,7 @@ export default function App() {
           <Route path="/ai-structured-tools" element={<AIStructuredTools />} />
           <Route path="/ai-history" element={<AIHistory />} />
           <Route path="/family-tree-community" element={<FamilyTreeAndCommunity />} />
+          <Route path="/tasks" element={<TasksPage />} />
           <Route path="/custom-views" element={<CustomViewsPage />} />
           <Route path="/segment-triangulation-board" element={<SegmentTriangulationBoard />} />
           {/* // === Batch 04 Gaps & Frontend Mounts === */}

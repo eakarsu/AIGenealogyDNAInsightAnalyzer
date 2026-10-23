@@ -9,13 +9,12 @@ export default function Login({ onLogin }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const signInWith = async (loginEmail, loginPassword, registerMode = isRegister) => {
     setError('');
     setLoading(true);
     try {
-      const endpoint = isRegister ? '/auth/register' : '/auth/login';
-      const body = isRegister ? { email, password, name } : { email, password };
+      const endpoint = registerMode ? '/auth/register' : '/auth/login';
+      const body = registerMode ? { email: loginEmail, password: loginPassword, name } : { email: loginEmail, password: loginPassword };
       const data = await apiPost(endpoint, body);
       if (data.error) {
         setError(data.error);
@@ -28,6 +27,11 @@ export default function Login({ onLogin }) {
       setError('Connection error. Is the backend running?');
     }
     setLoading(false);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await signInWith(email, password, isRegister);
   };
 
   return (
@@ -54,8 +58,15 @@ export default function Login({ onLogin }) {
           </div>
           <button
             type="button"
-            onClick={() => { setEmail(import.meta.env.VITE_DEMO_EMAIL || ''); setPassword(import.meta.env.VITE_DEMO_PASSWORD || ''); setError(''); }}
-            disabled={!import.meta.env.VITE_DEMO_EMAIL || !import.meta.env.VITE_DEMO_PASSWORD}
+            onClick={() => {
+              const demoEmail = import.meta.env.VITE_DEMO_EMAIL || '';
+              const demoPassword = import.meta.env.VITE_DEMO_PASSWORD || '';
+              setIsRegister(false);
+              setEmail(demoEmail);
+              setPassword(demoPassword);
+              signInWith(demoEmail, demoPassword, false);
+            }}
+            disabled={loading || !import.meta.env.VITE_DEMO_EMAIL || !import.meta.env.VITE_DEMO_PASSWORD}
             aria-label="Fill demo credentials"
             style={{ width: '100%', marginBottom: '12px', padding: '10px 14px', borderRadius: '8px', border: '1px solid currentColor', background: 'transparent', cursor: 'pointer' }}
           >

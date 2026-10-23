@@ -25,7 +25,7 @@ export default function DetailModal({ item, feature, onClose, onEdit, onDelete }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720 }}>
+      <div className="modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720 }}>
         <div className="modal-header">
           <h2>{feature.icon} Record Details</h2>
           <button className="modal-close" onClick={onClose}>x</button>
@@ -83,7 +83,7 @@ export default function DetailModal({ item, feature, onClose, onEdit, onDelete }
           </button>
           <button className="btn-action btn-edit" onClick={onEdit}>Edit</button>
           <button className="btn-action btn-delete" onClick={onDelete}>Delete</button>
-          <button className="btn-action btn-cancel" onClick={onClose}>Close</button>
+          <button className="btn-action btn-cancel" onClick={onClose}>Cancel</button>
         </div>
       </div>
     </div>

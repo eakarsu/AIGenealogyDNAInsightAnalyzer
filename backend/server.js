@@ -29,6 +29,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/ethnicity', require('./routes/ethnicity'));
 app.use('/api/ancestors', require('./routes/ancestors'));
+app.use('/api/tasks', require('./routes/tasks'));
 app.use('/api/health-risks', require('./routes/healthRisks'));
 app.use('/api/migration', require('./routes/migration'));
 app.use('/api/relationships', require('./routes/relationships'));

@@ -52,6 +52,11 @@ function createCrudRouter(tableName, aiPromptFn) {
       );
       const total = parseInt(countResult.rows[0].count, 10);
 
+      if (req.query.search||req.query.q||req.query.relationship) {
+        const all=await pool.query(`SELECT * FROM ${tableName} WHERE user_id=$1 ORDER BY id LIMIT 500`,[req.user.id]);
+        const {filterRecords}=require('../domain/taskPolicy'); const rows=filterRecords(all.rows,req.query);
+        return res.json({data:rows.slice(offset,offset+limit),pagination:{page,limit,total:rows.length,totalPages:Math.ceil(rows.length/limit)}});
+      }
       const result = await pool.query(
         `SELECT * FROM ${tableName} WHERE user_id = $1 ORDER BY id LIMIT $2 OFFSET $3`,
         [req.user.id, limit, offset]
@@ -65,6 +70,11 @@ function createCrudRouter(tableName, aiPromptFn) {
     }
   });
 
+  router.get('/export', authenticateToken, async (req, res) => {
+    try { const r=await pool.query(`SELECT * FROM ${tableName} WHERE user_id=$1 ORDER BY id LIMIT 500`,[req.user.id]); const {filterRecords,toCsv}=require('../domain/taskPolicy'); const rows=filterRecords(r.rows,req.query||{});
+      if(String(req.query.format||'json').toLowerCase()==='csv'){ res.setHeader('Content-Type','text/csv'); res.setHeader('Content-Disposition','attachment; filename="export.csv"'); return res.send(toCsv(rows)); }
+      res.json({exported_at:new Date().toISOString(),count:rows.length,records:rows}); } catch(err){ res.status(500).json({error:err.message}); }
+  });
   // GET one — scoped to current user
   router.get('/:id', authenticateToken, async (req, res) => {
     try {
